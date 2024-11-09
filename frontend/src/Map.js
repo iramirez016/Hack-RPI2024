@@ -7,7 +7,7 @@ const Map = () => {
   const mapRef = useRef(null);
   const savedPosition = useRef(null);
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "AIzaSyAwTD3-V30SQKb9tmM7UyVhx_ron9jcH5s"
+    googleMapsApiKey: "sdfsdf"
   });
 
   const getIPLocation = useCallback(async () => {

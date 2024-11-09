@@ -1,26 +1,20 @@
 import googlemaps
+import json
 from datetime import datetime
 
-gmaps = googlemaps.Client(key='Add Your Key here')
+# Initialize the Google Maps client
+gmaps = googlemaps.Client(key='AIzaSyAwTD3-V30SQKb9tmM7UyVhx_ron9jcH5s')  # Replace with your actual API key
 
-# Geocoding an address
-geocode_result = gmaps.geocode('1600 Amphitheatre Parkway, Mountain View, CA')
-
-# Look up an address with reverse geocoding
+# Reverse geocode to get place_id
 reverse_geocode_result = gmaps.reverse_geocode((40.714224, -73.961452))
+place_id = reverse_geocode_result[0]['place_id']
 
-# Request directions via public transit
-now = datetime.now()
-directions_result = gmaps.directions("Sydney Town Hall",
-                                     "Parramatta, NSW",
-                                     mode="transit",
-                                     departure_time=now)
+# Fetch detailed information using place_id
+place_details = gmaps.place(place_id=place_id)
 
-# Validate an address with address validation
-addressvalidation_result =  gmaps.addressvalidation(['1600 Amphitheatre Pk'], 
-                                                    regionCode='US',
-                                                    locality='Mountain View', 
-                                                    enableUspsCass=True)
+# Save place_details to a text file
+with open("place_details.txt", "w") as file:
+    json.dump(place_details, file, indent=4)  # Pretty print with an indentation of 4
 
-# Get an Address Descriptor of a location in the reverse geocoding response
-address_descriptor_result = gmaps.reverse_geocode((40.714224, -73.961452), enable_address_descriptor=True)
+print("Place details have been saved to 'place_details.txt'")
+

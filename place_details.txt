@@ -1,0 +1,104 @@
+{
+    "html_attributions": [],
+    "result": {
+        "address_components": [
+            {
+                "long_name": "277",
+                "short_name": "277",
+                "types": [
+                    "street_number"
+                ]
+            },
+            {
+                "long_name": "Bedford Avenue",
+                "short_name": "Bedford Ave",
+                "types": [
+                    "route"
+                ]
+            },
+            {
+                "long_name": "Williamsburg",
+                "short_name": "Williamsburg",
+                "types": [
+                    "neighborhood",
+                    "political"
+                ]
+            },
+            {
+                "long_name": "Brooklyn",
+                "short_name": "Brooklyn",
+                "types": [
+                    "sublocality_level_1",
+                    "sublocality",
+                    "political"
+                ]
+            },
+            {
+                "long_name": "Kings County",
+                "short_name": "Kings County",
+                "types": [
+                    "administrative_area_level_2",
+                    "political"
+                ]
+            },
+            {
+                "long_name": "New York",
+                "short_name": "NY",
+                "types": [
+                    "administrative_area_level_1",
+                    "political"
+                ]
+            },
+            {
+                "long_name": "United States",
+                "short_name": "US",
+                "types": [
+                    "country",
+                    "political"
+                ]
+            },
+            {
+                "long_name": "11211",
+                "short_name": "11211",
+                "types": [
+                    "postal_code"
+                ]
+            }
+        ],
+        "adr_address": "<span class=\"street-address\">277 Bedford Ave</span>, <span class=\"locality\">Brooklyn</span>, <span class=\"region\">NY</span> <span class=\"postal-code\">11211</span>, <span class=\"country-name\">USA</span>",
+        "formatted_address": "277 Bedford Ave, Brooklyn, NY 11211, USA",
+        "geometry": {
+            "location": {
+                "lat": 40.7142205,
+                "lng": -73.9612903
+            },
+            "viewport": {
+                "northeast": {
+                    "lat": 40.7155979302915,
+                    "lng": -73.9600183197085
+                },
+                "southwest": {
+                    "lat": 40.7128999697085,
+                    "lng": -73.9627162802915
+                }
+            }
+        },
+        "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/geocode-71.png",
+        "icon_background_color": "#7B9EB0",
+        "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+        "name": "277 Bedford Ave",
+        "place_id": "ChIJd8BlQ2BZwokRAFUEcm_qrcA",
+        "plus_code": {
+            "compound_code": "P27Q+MF Brooklyn, NY, USA",
+            "global_code": "87G8P27Q+MF"
+        },
+        "reference": "ChIJd8BlQ2BZwokRAFUEcm_qrcA",
+        "types": [
+            "street_address"
+        ],
+        "url": "https://maps.google.com/?q=277+Bedford+Ave,+Brooklyn,+NY+11211,+USA&ftid=0x89c259604365c077:0xc0adea6f72045500",
+        "utc_offset": -300,
+        "vicinity": "Brooklyn"
+    },
+    "status": "OK"
+}

@@ -22,6 +22,24 @@ const mapStyles = {
   ]
 };
 
+// Add pulse animation
+const pulseAnimation = `
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 15px rgba(220, 38, 38, 0.5);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 20px rgba(220, 38, 38, 0.7);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 15px rgba(220, 38, 38, 0.5);
+    }
+  }
+`;
+
 const Map = () => {
   const [center, setCenter] = useState({ lat: 40.7128, lng: -74.0060 });
   const [directions, setDirections] = useState(null);
@@ -127,7 +145,9 @@ const Map = () => {
 
   return (
     <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
-      {/* Your existing search box */}
+      <style>{pulseAnimation}</style>
+
+      {/* Search Box */}
       <div style={{
         position: 'absolute',
         top: '20px',
@@ -260,6 +280,34 @@ const Map = () => {
         }}
       >
         {currentStyle === 'night' ? '☀️' : '🌙'}
+      </button>
+
+      {/* SOS Button */}
+      <button 
+        onClick={() => alert('Emergency services are being contacted!')}
+        style={{
+          position: 'absolute',
+          bottom: '40px',
+          left: '20px',
+          zIndex: 1,
+          padding: '20px',
+          backgroundColor: '#dc2626',
+          color: 'white',
+          border: 'none',
+          borderRadius: '50%',
+          cursor: 'pointer',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 0 15px rgba(220, 38, 38, 0.5)',
+          fontSize: '24px',
+          fontWeight: 'bold',
+          width: '80px',
+          height: '80px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation: 'pulse 2s infinite'
+        }}
+      >
+        SOS
       </button>
 
       <GoogleMap

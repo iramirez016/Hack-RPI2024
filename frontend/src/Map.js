@@ -83,25 +83,69 @@ const Map = () => {
   };
 
   const updateNearestSafeSpaces = useCallback(() => {
-    if (!center) return;
-
-    const spacesWithDistances = allSafeSpaces.map(space => {
-      const distance = calculateDistance(center, space.coordinates);
-      return {
-        ...space,
-        distance: distance,
-        distanceText: distance < 1 ? 
-          `${Math.round(distance * 1000)} meters` : 
-          `${distance.toFixed(1)} km`
-      };
+    if (!center || !mapRef.current) return;
+  
+    const service = new window.google.maps.places.PlacesService(mapRef.current);
+    const searchTypes = [
+      { type: 'police', query: 'police station' },
+      { type: 'hospital', query: 'hospital' },
+      { type: 'fire_station', query: 'fire station' },
+      { type: 'library', query: 'public library' }
+    ];
+  
+    const promises = searchTypes.map(({ type, query }) => {
+      return new Promise((resolve) => {
+        const request = {
+          location: new window.google.maps.LatLng(center.lat, center.lng),
+          radius: 5000, // 5km radius
+          keyword: query,
+          type: type === 'hospital' ? 'hospital' : 
+                type === 'police' ? 'police' : 
+                type === 'fire_station' ? 'fire_station' : 
+                'library'
+        };
+  
+        service.nearbySearch(request, (results, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+            resolve(results.map(place => ({
+              name: place.name,
+              type: type,
+              coordinates: {
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng()
+              },
+              address: place.vicinity,
+              distance: window.google.maps.geometry.spherical.computeDistanceBetween(
+                new window.google.maps.LatLng(center.lat, center.lng),
+                place.geometry.location
+              )
+            })));
+          } else {
+            resolve([]);
+          }
+        });
+      });
     });
-
-    const nearest = spacesWithDistances
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 5);
-
-    setNearestSafeSpaces(nearest);
-  }, [center, allSafeSpaces]);
+  
+    Promise.all(promises)
+      .then(resultsArray => {
+        const allPlaces = resultsArray.flat();
+        const sortedPlaces = allPlaces
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 5)
+          .map(place => ({
+            ...place,
+            distanceText: place.distance < 1000 ? 
+              `${Math.round(place.distance)} meters` : 
+              `${(place.distance / 1000).toFixed(1)} km`
+          }));
+  
+        setNearestSafeSpaces(sortedPlaces);
+      })
+      .catch(error => {
+        console.error('Error fetching safe spaces:', error);
+      });
+  }, [center]);
 
   const onMapLoad = useCallback((map) => {
     mapRef.current = map;
@@ -131,9 +175,25 @@ const Map = () => {
   }, [center, destination]);
 
   const clearRoute = useCallback(() => {
+    // Clear directions
     setDirections(null);
+    // Clear destination input
     setDestination("");
-  }, []);
+    // Clear nearby safe spaces list
+    setNearestSafeSpaces([]);
+    // Reset map style to default (optional)
+    setShowSafeSpaces(false);
+    
+    // Reset map zoom and center to saved position or initial location
+    if (mapRef.current && savedPosition.current) {
+        mapRef.current.setZoom(18); // Or a preferred default zoom level
+        mapRef.current.panTo(savedPosition.current); // Center back to saved position or default location
+    }
+
+    // Reset any search-related states
+    setIsSearching(false);
+}, []);
+
 
   const toggleMapStyle = useCallback(() => {
     setCurrentStyle(prev => prev === 'default' ? 'night' : 'default');
@@ -201,7 +261,7 @@ const Map = () => {
   }, [updateNearestSafeSpaces]);
 
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "",
+    googleMapsApiKey: "AIzaSyAwTD3-V30SQKb9tmM7UyVhx_ron9jcH5s",
     libraries: ["places", "geometry"]
   });
 

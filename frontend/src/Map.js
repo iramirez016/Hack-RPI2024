@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+<<<<<<< HEAD
 import { useLoadScript, GoogleMap, Marker, DirectionsRenderer } from '@react-google-maps/api';
 import { SearchIcon, Navigation } from 'lucide-react';
 
@@ -39,6 +40,10 @@ const pulseAnimation = `
     }
   }
 `;
+=======
+import { useLoadScript, GoogleMap } from '@react-google-maps/api';
+import BuildingInfo from './buildingInfo';
+>>>>>>> 6ee04077506dc4f320325ce20c5c8f4800307558
 
 const Map = () => {
   const [center, setCenter] = useState({ lat: 40.7128, lng: -74.0060 });
@@ -323,6 +328,7 @@ const Map = () => {
           styles: mapStyles[currentStyle],
           gestureHandling: 'greedy'
         }}
+<<<<<<< HEAD
       >
         <Marker
           position={center}
@@ -351,6 +357,10 @@ const Map = () => {
           />
         )}
       </GoogleMap>
+=======
+      />
+      <BuildingInfo lat={center.lat} lng={center.lng} />
+>>>>>>> 6ee04077506dc4f320325ce20c5c8f4800307558
     </div>
   );
 };

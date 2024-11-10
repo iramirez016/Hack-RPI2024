@@ -1,7 +1,7 @@
 // src/Map.js
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLoadScript, GoogleMap } from '@react-google-maps/api';
-
+import BuildingInfo from './buildingInfo';
 
 const Map = () => {
   const [center, setCenter] = useState({ lat: 40.7128, lng: -74.0060 });
@@ -103,7 +103,7 @@ const Map = () => {
           fullscreenControl: true
         }}
       />
-      
+      <BuildingInfo lat={center.lat} lng={center.lng} />
     </div>
   );
 };

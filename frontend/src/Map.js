@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useLoadScript, GoogleMap, Marker, DirectionsRenderer } from '@react-google-maps/api';
-import { SearchIcon, Navigation } from 'lucide-react';
+import { SearchIcon, Navigation, Home } from 'lucide-react';
 
-// Define map styles
 const mapStyles = {
   default: [],
   night: [
@@ -22,8 +21,7 @@ const mapStyles = {
   ]
 };
 
-// Add pulse animation
-const pulseAnimation = `
+const animations = `
   @keyframes pulse {
     0% {
       transform: scale(1);
@@ -38,6 +36,17 @@ const pulseAnimation = `
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 15px rgba(220, 38, 38, 0.5);
     }
   }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
 const Map = () => {
@@ -46,13 +55,89 @@ const Map = () => {
   const [destination, setDestination] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [currentStyle, setCurrentStyle] = useState('default');
+  const [showSafeSpaces, setShowSafeSpaces] = useState(false);
+  const [nearestSafeSpaces, setNearestSafeSpaces] = useState([]);
   const mapRef = useRef(null);
   const savedPosition = useRef(null);
 
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "AIzaSyAwTD3-V30SQKb9tmM7UyVhx_ron9jcH5s",
-    libraries: ["places"]
-  });
+  const allSafeSpaces = useMemo(() => [
+    { name: "Police Station", type: "police", coordinates: { lat: 40.7128, lng: -74.0060 } },
+    { name: "Central Hospital", type: "hospital", coordinates: { lat: 40.7148, lng: -74.0068 } },
+    { name: "Fire Station", type: "fire", coordinates: { lat: 40.7138, lng: -74.0040 } },
+    { name: "Emergency Center", type: "emergency", coordinates: { lat: 40.7158, lng: -74.0055 } },
+    { name: "Public Library", type: "public", coordinates: { lat: 40.7135, lng: -74.0080 } }
+  ], []);
+
+  const calculateDistance = (point1, point2) => {
+    const R = 6371;
+    const lat1 = point1.lat * Math.PI / 180;
+    const lat2 = point2.lat * Math.PI / 180;
+    const deltaLat = (point2.lat - point1.lat) * Math.PI / 180;
+    const deltaLng = (point2.lng - point1.lng) * Math.PI / 180;
+
+    const a = Math.sin(deltaLat/2) * Math.sin(deltaLat/2) +
+              Math.cos(lat1) * Math.cos(lat2) *
+              Math.sin(deltaLng/2) * Math.sin(deltaLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const updateNearestSafeSpaces = useCallback(() => {
+    if (!center) return;
+
+    const spacesWithDistances = allSafeSpaces.map(space => {
+      const distance = calculateDistance(center, space.coordinates);
+      return {
+        ...space,
+        distance: distance,
+        distanceText: distance < 1 ? 
+          `${Math.round(distance * 1000)} meters` : 
+          `${distance.toFixed(1)} km`
+      };
+    });
+
+    const nearest = spacesWithDistances
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 5);
+
+    setNearestSafeSpaces(nearest);
+  }, [center, allSafeSpaces]);
+
+  const onMapLoad = useCallback((map) => {
+    mapRef.current = map;
+  }, []);
+
+  const calculateRoute = useCallback(() => {
+    if (!destination) return;
+    setIsSearching(true);
+
+    const directionsService = new window.google.maps.DirectionsService();
+    directionsService.route(
+      {
+        origin: center,
+        destination,
+        travelMode: window.google.maps.TravelMode.DRIVING,
+      },
+      (result, status) => {
+        if (status === window.google.maps.DirectionsStatus.OK) {
+          setDirections(result);
+          setIsSearching(false);
+        } else {
+          console.error(`error fetching directions ${result}`);
+          setIsSearching(false);
+        }
+      }
+    );
+  }, [center, destination]);
+
+  const clearRoute = useCallback(() => {
+    setDirections(null);
+    setDestination("");
+  }, []);
+
+  const toggleMapStyle = useCallback(() => {
+    setCurrentStyle(prev => prev === 'default' ? 'night' : 'default');
+  }, []);
 
   const getIPLocation = useCallback(async () => {
     try {
@@ -101,51 +186,30 @@ const Map = () => {
     }
   }, [getIPLocation]);
 
+  const navigateToSafeSpace = useCallback((coordinates) => {
+    setDestination(`${coordinates.lat},${coordinates.lng}`);
+    calculateRoute();
+    setShowSafeSpaces(false);
+  }, [calculateRoute]);
+
   useEffect(() => {
     getBrowserLocation();
   }, [getBrowserLocation]);
 
-  const onMapLoad = useCallback(map => {
-    mapRef.current = map;
-  }, []);
+  useEffect(() => {
+    updateNearestSafeSpaces();
+  }, [updateNearestSafeSpaces]);
 
-  const calculateRoute = useCallback(() => {
-    if (!destination) return;
-    setIsSearching(true);
-
-    const directionsService = new window.google.maps.DirectionsService();
-    directionsService.route(
-      {
-        origin: center,
-        destination,
-        travelMode: window.google.maps.TravelMode.DRIVING,
-      },
-      (result, status) => {
-        if (status === window.google.maps.DirectionsStatus.OK) {
-          setDirections(result);
-          setIsSearching(false);
-        } else {
-          console.error(`error fetching directions ${result}`);
-          setIsSearching(false);
-        }
-      }
-    );
-  }, [center, destination]);
-
-  const clearRoute = () => {
-    setDirections(null);
-    setDestination("");
-  };
-
-  const toggleMapStyle = () => {
-    setCurrentStyle(currentStyle === 'default' ? 'night' : 'default');
-  };
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: "",
+    libraries: ["places", "geometry"]
+  });
 
   if (!isLoaded) return "Loading Maps";
 
   return (
     <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
-      <style>{pulseAnimation}</style>
+      <style>{animations}</style>
 
       {/* Search Box */}
       <div style={{
@@ -282,6 +346,97 @@ const Map = () => {
         {currentStyle === 'night' ? '☀️' : '🌙'}
       </button>
 
+      {/* Safe Spaces Button and Menu */}
+      <div style={{ position: 'absolute', top: '90px', right: '20px', zIndex: 1 }}>
+        <button 
+          onClick={() => setShowSafeSpaces(!showSafeSpaces)}
+          style={{
+            padding: '12px',
+            backgroundColor: '#4285f4',
+            color: 'white',
+            border: 'none',
+            borderRadius: '50%',
+            cursor: 'pointer',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#3b77db';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#4285f4';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          <Home size={24} />
+        </button>
+
+        {showSafeSpaces && (
+          <div style={{
+            position: 'absolute',
+            top: '120%',
+            right: '0',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+            padding: '12px',
+            width: '280px',
+            animation: 'slideIn 0.3s ease-out forwards'
+          }}>
+            <div style={{ 
+              borderBottom: '2px solid #f1f5f9', 
+              paddingBottom: '8px', 
+              marginBottom: '8px',
+              fontWeight: '600',
+              color: '#1e293b'
+            }}>
+              Nearest Safe Spaces
+            </div>
+            {nearestSafeSpaces.map((space, index) => (
+              <button
+                key={index}
+                onClick={() => navigateToSafeSpace(space.coordinates)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  marginBottom: '8px',
+                  backgroundColor: 'transparent',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f8fafc';
+                  e.currentTarget.style.borderColor = '#4285f4';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                }}
+              >
+                <div style={{ fontWeight: '500', color: '#1e293b' }}>{space.name}</div>
+                <div style={{ fontSize: '0.875rem', color: '#64748b' }}>Type: {space.type}</div>
+                <div style={{ 
+                  fontSize: '0.75rem', 
+                  color: '#4285f4', 
+                  marginTop: '4px'
+                }}>
+                  Distance: {space.distanceText}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* SOS Button */}
       <button 
         onClick={() => alert('Emergency services are being contacted!')}
@@ -324,19 +479,31 @@ const Map = () => {
           gestureHandling: 'greedy'
         }}
       >
-        <Marker
-          position={center}
-          title="Your Location"
-          animation={window.google.maps.Animation.DROP}
-          icon={{
-            path: window.google.maps.SymbolPath.CIRCLE,
-            scale: 8,
-            fillColor: currentStyle === 'night' ? "#69F0AE" : "#4285F4",
-            fillOpacity: 1,
-            strokeColor: "#FFFFFF",
-            strokeWeight: 2,
-          }}
-        />
+        {center && (
+          <Marker
+            position={center}
+            icon={{
+              url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+              scaledSize: new window.google.maps.Size(40, 40)
+            }}
+            title="You are here"
+          />
+        )}
+
+        {nearestSafeSpaces.map((space, index) => (
+          <Marker
+            key={index}
+            position={space.coordinates}
+            icon={{
+              url: `https://maps.google.com/mapfiles/ms/icons/${
+                space.type === 'police' ? 'red' : 
+                space.type === 'hospital' ? 'purple' : 
+                'yellow'}-dot.png`,
+              scaledSize: new window.google.maps.Size(32, 32)
+            }}
+            title={`${space.name} - ${space.distanceText}`}
+          />
+        ))}
 
         {directions && (
           <DirectionsRenderer
